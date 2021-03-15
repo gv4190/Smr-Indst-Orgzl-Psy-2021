@@ -1,0 +1,135 @@
+setwd("~/Desktop/Graduate Classes/Winter 2021/Big Data/Machine Learning")
+getwd
+
+traindata<-read.csv("train.csv")
+test_data<-read.csv("participant_dev.csv")
+
+
+####packages####
+library(plyr)
+library(caret)
+install.packages("mice")
+library(mice)
+library(dplyr)
+
+####Understanding data####
+#This dataset contains 49,102 hires made in a group of retail stores over a period of several
+#months. Special validation-only performance ratings were collected for a sample (N=12,890)
+#of these hires. We included data for the entire cohort because part of the task is to create
+#a predictor of retention; to do this effectively you might choose to use all the data for 
+#all exits, not just for employees who were retained long enough to have their performance 
+#evaluated.
+
+####################################cleaning data#############################################
+colnames(traindata)
+
+#rename overall rating to overall performance
+traindata$Overall_Rating<-traindata$Overall_Performance
+
+##Criterion Variables#
+hist(traindata$Overall_Rating) #Range from 1-5 (higher more fav)
+hist(traindata$Technical_Skills) #Range from 1-5 (higher more fav)
+hist(traindata$Customer_Service) #Range from 1-5 (higher more fav)
+hist(traindata$Hire_Again) #Range from 1-5 (higher more fav)
+
+summary(traindata[c("Overall_Rating", "Technical_Skills", "Customer_Service", "Hire_Again")]) #note 36212 missing data in each
+
+##Fairness Variable##
+hist(traindata$Protected_Group) #far more not protected than protected
+sum(is.na(traindata$Protected_Group)) #barely any missing
+
+#######################################Standardization#######################################
+
+#training set#
+traindata[c(2:6,10:129)]<-scale(traindata[c(2:6,10:129)])
+
+#testing set#
+test_data[c(2:121)]<-scale(test_data[c(2:121)])
+
+#####################################TRAINING DATA SET UP####################################
+###############################select observations with retained value#######################
+df1<-traindata[complete.cases(traindata[2]),]
+
+####split predictors and criterion####
+traincrit<-subset(df1[c("Overall_Rating","Technical_Skills","Teamwork","Customer_Service","Hire_Again","High_Performer","Protected_Group","Retained")])
+trainpred<-read.csv("Imputed Train Predictor Data.csv")
+  #orginal code : subset(df1[c(10:129)])
+trainpred<-trainpred[,-1]
+sum(is.na.data.frame(traincrit))
+
+#############################SPLIT INTO TRAINING + TESTING SETS################################
+set.seed(1008)
+dt = sort(sample(nrow(trainpred), nrow(trainpred)*.7))
+pred_ttrain<-trainpred[dt,]
+pred_ttest<-trainpred[-dt,]
+
+set.seed(1008)
+dt2 = sort(sample(nrow(traincrit), nrow(traincrit)*.7))
+crit_ttrain<-traincrit[dt2,]
+crit_ttest<-traincrit[-dt2,]
+
+
+
+#####################################MISSING DATA IMPUTATION#################################
+####missing data####
+#set.seed(1008)
+
+#tempData<-mice(data = trainpred, m = 2, method = "rf", maxit = 2, seed = 1008, where = is.na(traincrit)) #random forest imputation
+#trainpred<-complete(tempData)
+#sum(is.na.data.frame(traincrit))
+
+#export to make sure don't have to re-run
+#write.csv(trainpred, "~/Desktop/Graduate Classes/Winter 2021/Big Data/Machine Learning/Imputed Train Predictor Data.csv")
+
+####################################RUN ELASTIC NET########################################## MUST REVIEW ##############
+##create criterion composite##
+traincrit$comp <- rowMeans(select(traincrit,1:8), na.rm = TRUE) 
+
+set.seed(2033) #set
+fold.ids <- createMultiFolds(traincrit$comp,k=10,times=3) #balances the outcome
+HyperGrid <- expand.grid(.alpha= c(seq(.0, 1, by = 0.1)),.lambda=c(seq(.0, 1, by = 0.1)) ) 
+
+fitControl <- trainControl(method = "repeatedcv", 
+                           number = 10, 
+                           repeats = 3, 
+                           index = fold.ids,
+                           selectionFunction = "best",     
+                           verboseIter = TRUE)    #gives notification on progress  
+
+ElasticNet_fit <- train(x = as.data.frame(trainpred[,1:120]), y = traincrit$comp , "glmnet", trControl = fitControl,metric="RMSE", tuneGrid=HyperGrid, standardize= FALSE)
+ElasticNet_fit #results across tune
+
+ElasticNet_fit$resample #metrics by each resample (for best tune)
+
+coef(ElasticNet_fit$finalModel, ElasticNet_fit$finalModel$lambdaOpt) ### get the weights of the model
+ggplot(varImp(ElasticNet_fit, scale=FALSE)) #varImp differs based on method used in "train", but for lm it is absolute coefficient
+###Seems like Biodata_04, Biodata_10, Biodata_08,Biodata_06,Biodata_10,PScale01_Q4,PScale02_Q3, 
+  #PScale03_Q4, PScale04_Q3, PScale05_Q1, PScale06_Q1, PScale06_Q3, PScale07_Q2, PScale10_Q1
+  #PScale11_Q3, PScale11_Q4, Biodata_06, Scenario2_1, Scenario1_Time, Scenario1_7, SJ_Least_8, 
+  #SJ_Most_6, SJ_Most_3, SJ_Most_1 apply most
+
+#run lasso regression
+set.seed(2033) #set
+fold.ids <- createMultiFolds(traincrit$comp,k=10,times=3) #balances the outcome
+HyperGrid <- expand.grid(.alpha=1,.lambda=c(seq(.0, .1, by = 0.01)) )  #value of max lambda will depend on dataset
+
+fitControl <- trainControl(method = "repeatedcv", 
+                           number = 10, 
+                           repeats = 3, 
+                           index = fold.ids,
+                           selectionFunction = "best",      
+                           verboseIter = TRUE)    #gives notification on progress  
+
+
+####lasso, getting lamda###
+Lasso_fit <- train(x = as.data.frame(trainpred[,1:120]), y = traincrit$comp , "glmnet", trainControl = fitControl, metric="RMSE", 
+                   tuneGrid=HyperGrid, standardize= FALSE)
+Lasso_fit
+
+Lasso_fit$resample #metrics by each resample (for best tune)
+
+coef(Lasso_fit$finalModel, Lasso_fit$finalModel$lambdaOpt) ### get the weights of the model
+ggplot(varImp(Lasso_fit, scale=FALSE)) #varImp differs based on method used in "train", but for lm
+
+
+
