@@ -1,0 +1,83 @@
+buildModel
+
+buildModel 'glm', {"model_id":"glm-1649f732-62fb-4538-8e7d-cdb20216e24b","training_frame":"traindata_sid_b738_1","validation_frame":"traindata_sid_b738_1","nfolds":10,"seed":1008,"response_column":"Protected_Group","ignored_columns":["UNIQUE_ID","Overall_Rating","Technical_Skills","Teamwork","Customer_Service","Hire_Again","High_Performer","split"],"random_columns":[],"ignore_const_cols":true,"family":"AUTO","rand_family":["[gaussian]"],"solver":"AUTO","alpha":[],"lambda":[],"lambda_search":true,"early_stopping":true,"nlambdas":-1,"standardize":true,"non_negative":false,"startval":[],"calc_like":false,"HGLM":false,"cold_start":false,"obj_reg":-1,"fold_assignment":"AUTO","score_each_iteration":false,"score_iteration_interval":-1,"offset_column":"Retained","compute_p_values":false,"remove_collinear_columns":false,"max_iterations":-1,"link":"family_default","rand_link":[],"stopping_rounds":0,"stopping_metric":"AUTO","stopping_tolerance":0.001,"max_runtime_secs":0,"auc_type":"AUTO","keep_cross_validation_models":true,"keep_cross_validation_predictions":false,"keep_cross_validation_fold_assignment":false,"missing_values_handling":"MeanImputation","intercept":true,"objective_epsilon":-1,"beta_epsilon":0.0001,"gradient_epsilon":-1,"prior":-1,"lambda_min_ratio":-1,"max_active_predictors":-1,"interactions":[],"interaction_pairs":[]}
+
+getModel "glm-1649f732-62fb-4538-8e7d-cdb20216e24b"
+
+buildModel 'gbm', {"model_id":"gbm-833533fe-3b67-4ca2-b8c5-a51982539d9f","training_frame":"traindata_sid_b738_1","validation_frame":"traindata_sid_b738_1","nfolds":10,"response_column":"Retained","ignored_columns":["UNIQUE_ID","Overall_Rating","Technical_Skills","Teamwork","Customer_Service","Hire_Again","High_Performer","Protected_Group","SJ_Most_1","SJ_Least_1","SJ_Time_1","SJ_Most_2","SJ_Most_3","SJ_Time_3","SJ_Most_4","SJ_Time_4","SJ_Time_5","SJ_Most_6","SJ_Time_6","SJ_Most_7","SJ_Least_7","SJ_Most_8","SJ_Least_8","SJ_Most_9","SJ_Least_9","SJ_Time_9","Scenario1_1","Scenario1_2","Scenario1_3","Scenario1_4","Scenario1_5","Scenario1_6","Scenario1_7","Scenario1_8","Scenario2_3","Scenario2_5","Scenario2_6","Scenario2_8","Biodata_03","Biodata_05","Biodata_07","Biodata_09","Biodata_11","Biodata_12","Biodata_13","Biodata_15","Biodata_16","Biodata_20","PScale01_Q1","PScale01_Q4","PScale02_Q1","PScale02_Q2","PScale02_Q3","PScale03_Q4","PScale04_Q1","PScale04_Q3","PScale04_Q4","PScale05_Q1","PScale06_Q1","PScale06_Q3","PScale06_Q4","PScale06_Q5","PScale06_Q6","PScale07_Q1","PScale07_Q2","PScale07_Q4","PScale08_Q1","PScale08_Q2","PScale08_Q4","PScale09_Q1","PScale09_Q2","PScale09_Q3","PScale09_Q4","PScale10_Q1","PScale10_Q3","PScale10_Q4","PScale11_Q2","PScale11_Q4","PScale12_Q1","PScale12_Q3","PScale12_Q4","PScale13_Q1","PScale13_Q2","PScale13_Q3","PScale13_Q4","split"],"ignore_const_cols":true,"ntrees":50,"max_depth":5,"min_rows":10,"nbins":20,"seed":1008,"learn_rate":0.1,"sample_rate":1,"col_sample_rate":1,"score_each_iteration":false,"score_tree_interval":0,"fold_assignment":"AUTO","nbins_top_level":1024,"nbins_cats":1024,"r2_stopping":1.7976931348623157e+308,"stopping_rounds":0,"stopping_metric":"AUTO","stopping_tolerance":0.001,"max_runtime_secs":0,"learn_rate_annealing":1,"distribution":"AUTO","huber_alpha":0.9,"col_sample_rate_per_tree":1,"min_split_improvement":0.00001,"histogram_type":"AUTO","categorical_encoding":"AUTO","monotone_constraints":[],"gainslift_bins":-1,"auc_type":"AUTO","keep_cross_validation_models":true,"keep_cross_validation_predictions":false,"keep_cross_validation_fold_assignment":false,"build_tree_one_node":false,"sample_rate_per_class":[],"col_sample_rate_change_per_level":1,"max_abs_leafnode_pred":1.7976931348623157e+308,"pred_noise_bandwidth":0,"calibrate_model":false,"check_constant_response":true}
+
+getModel "gbm-833533fe-3b67-4ca2-b8c5-a51982539d9f"
+
+predict model: "gbm-833533fe-3b67-4ca2-b8c5-a51982539d9f"
+
+predict model: "gbm-833533fe-3b67-4ca2-b8c5-a51982539d9f", frame: "test_data_sid_b738_3", predictions_frame: "prediction-d7b076e0-21a6-4600-b883-a0c60e287647"
+
+getFrameSummary "prediction-d7b076e0-21a6-4600-b883-a0c60e287647"
+
+buildModel
+
+buildModel 'gbm', {"model_id":"gbm-38d8c2a8-de6e-4156-907d-4c8b9637d89e","training_frame":"traindata_sid_b738_1","validation_frame":"traindata_sid_b738_1","nfolds":10,"response_column":"High_Performer","ignored_columns":["UNIQUE_ID","Overall_Rating","Technical_Skills","Teamwork","Customer_Service","Hire_Again","Protected_Group","Retained","SJ_Most_1","SJ_Least_1","SJ_Time_1","SJ_Most_2","SJ_Most_3","SJ_Time_3","SJ_Most_4","SJ_Time_4","SJ_Time_5","SJ_Most_6","SJ_Time_6","SJ_Most_7","SJ_Least_7","SJ_Most_8","SJ_Least_8","SJ_Most_9","SJ_Least_9","SJ_Time_9","Scenario1_1","Scenario1_2","Scenario1_3","Scenario1_4","Scenario1_5","Scenario1_6","Scenario1_7","Scenario1_8","Scenario2_3","Scenario2_5","Scenario2_6","Scenario2_8","Biodata_03","Biodata_05","Biodata_07","Biodata_09","Biodata_11","Biodata_12","Biodata_13","Biodata_15","Biodata_16","Biodata_20","PScale01_Q1","PScale01_Q4","PScale02_Q1","PScale02_Q2","PScale02_Q3","PScale03_Q4","PScale04_Q1","PScale04_Q3","PScale04_Q4","PScale05_Q1","PScale06_Q1","PScale06_Q3","PScale06_Q4","PScale06_Q5","PScale06_Q6","PScale07_Q1","PScale07_Q2","PScale07_Q4","PScale08_Q1","PScale08_Q2","PScale08_Q4","PScale09_Q1","PScale09_Q2","PScale09_Q3","PScale09_Q4","PScale10_Q1","PScale10_Q3","PScale10_Q4","PScale11_Q2","PScale11_Q4","PScale12_Q1","PScale12_Q3","PScale12_Q4","PScale13_Q1","PScale13_Q2","PScale13_Q3","PScale13_Q4","split"],"ignore_const_cols":true,"ntrees":50,"max_depth":5,"min_rows":10,"nbins":20,"seed":1008,"learn_rate":0.1,"sample_rate":1,"col_sample_rate":1,"score_each_iteration":false,"score_tree_interval":0,"fold_assignment":"AUTO","nbins_top_level":1024,"nbins_cats":1024,"r2_stopping":1.7976931348623157e+308,"stopping_rounds":0,"stopping_metric":"AUTO","stopping_tolerance":0.001,"max_runtime_secs":0,"learn_rate_annealing":1,"distribution":"AUTO","huber_alpha":0.9,"col_sample_rate_per_tree":1,"min_split_improvement":0.00001,"histogram_type":"AUTO","categorical_encoding":"AUTO","monotone_constraints":[],"gainslift_bins":-1,"auc_type":"AUTO","keep_cross_validation_models":true,"keep_cross_validation_predictions":false,"keep_cross_validation_fold_assignment":false,"build_tree_one_node":false,"sample_rate_per_class":[],"col_sample_rate_change_per_level":1,"max_abs_leafnode_pred":1.7976931348623157e+308,"pred_noise_bandwidth":0,"calibrate_model":false,"check_constant_response":true}
+
+getModel "gbm-38d8c2a8-de6e-4156-907d-4c8b9637d89e"
+
+predict model: "gbm-38d8c2a8-de6e-4156-907d-4c8b9637d89e"
+
+predict model: "gbm-38d8c2a8-de6e-4156-907d-4c8b9637d89e", frame: "test_data_sid_b738_3", predictions_frame: "prediction-8bfecdd6-f690-4560-9b02-8e9c4893c981"
+
+getFrameSummary "prediction-8bfecdd6-f690-4560-9b02-8e9c4893c981"
+
+importFiles
+
+importFiles [ "Desktop/Graduate Classes/Winter 2021/Big Data/Machine Learning/h2o Stuff/participant_test.csv" ]
+
+setupParse source_frames: [ "nfs://Users/shannonrowley/Desktop/Graduate Classes/Winter 2021/Big Data/Machine Learning/h2o Stuff/participant_test.csv" ]
+
+parseFiles source_frames: ["nfs://Users/shannonrowley/Desktop/Graduate Classes/Winter 2021/Big Data/Machine Learning/h2o Stuff/participant_test.csv"] destination_frame: "participant_test1.hex" parse_type: "CSV" separator: 44 number_columns: 122 single_quotes: false column_names: ["UNIQUE_ID","SJ_Most_1","SJ_Least_1","SJ_Time_1","SJ_Most_2","SJ_Least_2","SJ_Time_2","SJ_Most_3","SJ_Least_3","SJ_Time_3","SJ_Most_4","SJ_Least_4","SJ_Time_4","SJ_Most_5","SJ_Least_5","SJ_Time_5","SJ_Most_6","SJ_Least_6","SJ_Time_6","SJ_Most_7","SJ_Least_7","SJ_Time_7","SJ_Most_8","SJ_Least_8","SJ_Time_8","SJ_Most_9","SJ_Least_9","SJ_Time_9","Scenario1_1","Scenario1_2","Scenario1_3","Scenario1_4","Scenario1_5","Scenario1_6","Scenario1_7","Scenario1_8","Scenario1_Time","Scenario2_1","Scenario2_2","Scenario2_3","Scenario2_4","Scenario2_5","Scenario2_6","Scenario2_7","Scenario2_8","Scenario2_Time","Biodata_01","Biodata_02","Biodata_03","Biodata_04","Biodata_05","Biodata_06","Biodata_07","Biodata_08","Biodata_09","Biodata_10","Biodata_11","Biodata_12","Biodata_13","Biodata_14","Biodata_15","Biodata_16","Biodata_17","Biodata_18","Biodata_19","Biodata_20","PScale01_Q1","PScale01_Q2","PScale01_Q3","PScale01_Q4","PScale02_Q1","PScale02_Q2","PScale02_Q3","PScale02_Q4","PScale03_Q1","PScale03_Q2","PScale03_Q3","PScale03_Q4","PScale04_Q1","PScale04_Q2","PScale04_Q3","PScale04_Q4","PScale05_Q1","PScale05_Q2","PScale05_Q3","PScale05_Q4","PScale06_Q1","PScale06_Q2","PScale06_Q3","PScale06_Q4","PScale06_Q5","PScale06_Q6","PScale07_Q1","PScale07_Q2","PScale07_Q3","PScale07_Q4","PScale08_Q1","PScale08_Q2","PScale08_Q3","PScale08_Q4","PScale09_Q1","PScale09_Q2","PScale09_Q3","PScale09_Q4","PScale10_Q1","PScale10_Q2","PScale10_Q3","PScale10_Q4","PScale11_Q1","PScale11_Q2","PScale11_Q3","PScale11_Q4","PScale12_Q1","PScale12_Q2","PScale12_Q3","PScale12_Q4","PScale13_Q1","PScale13_Q2","PScale13_Q3","PScale13_Q4","PScale13_Q5","split"] column_types: ["Enum","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Enum"] delete_on_done: true check_header: 1 chunk_size: 37689
+
+getFrameSummary "participant_test1.hex"
+
+assist runAutoML, training_frame: "participant_test1.hex"
+
+runAutoML {"build_control":{"project_name":"Auto ML - Test Data","nfolds":5,"balance_classes":false,"stopping_criteria":{"seed":1008,"max_models":0,"max_runtime_secs":0,"max_runtime_secs_per_model":0,"stopping_rounds":3,"stopping_metric":"AUTO","stopping_tolerance":-1},"keep_cross_validation_predictions":true,"keep_cross_validation_models":true,"keep_cross_validation_fold_assignment":false},"input_spec":{"training_frame":"traindata_sid_b738_1","response_column":"Retained","validation_frame":"traindata_sid_b738_1","ignored_columns":["UNIQUE_ID","Overall_Rating","Technical_Skills","Teamwork","Customer_Service","Hire_Again","High_Performer","Protected_Group","SJ_Most_1","SJ_Least_1","SJ_Time_1","SJ_Most_2","SJ_Most_3","SJ_Time_3","SJ_Most_4","SJ_Time_4","SJ_Time_5","SJ_Most_6","SJ_Time_6","SJ_Most_7","SJ_Least_7","SJ_Most_8","SJ_Least_8","SJ_Most_9","SJ_Least_9","SJ_Time_9","Scenario1_1","Scenario1_2","Scenario1_3","Scenario1_4","Scenario1_5","Scenario1_6","Scenario1_7","Scenario1_8","Scenario2_3","Scenario2_5","Scenario2_6","Scenario2_8","Biodata_03","Biodata_05","Biodata_07","Biodata_09","Biodata_11","Biodata_12","Biodata_13","Biodata_15","Biodata_16","Biodata_20","PScale01_Q1","PScale01_Q4","PScale02_Q1","PScale02_Q2","PScale02_Q3","PScale03_Q4","PScale04_Q1","PScale04_Q3","PScale04_Q4","PScale05_Q1","PScale06_Q1","PScale06_Q3","PScale06_Q4","PScale06_Q5","PScale06_Q6","PScale07_Q1","PScale07_Q2","PScale07_Q4","PScale08_Q1","PScale08_Q2","PScale08_Q4","PScale09_Q1","PScale09_Q2","PScale09_Q3","PScale09_Q4","PScale10_Q1","PScale10_Q3","PScale10_Q4","PScale11_Q2","PScale11_Q4","PScale12_Q1","PScale12_Q3","PScale12_Q4","PScale13_Q1","PScale13_Q2","PScale13_Q3","PScale13_Q4","split"],"sort_metric":"AUTO"},"build_models":{"exclude_algos":[],"exploitation_ratio":0,"monotone_constraints":[]}}, 'exec'
+
+getLeaderboard "Auto ML - Test Data@@Retained"
+
+getLeaderboard "Auto ML - Test Data@@Retained"
+
+getModel "XGBoost_grid__1_AutoML_20210314_140016_model_10"
+
+getModel "StackedEnsemble_BestOfFamily_AutoML_20210314_140016"
+
+predict model: "StackedEnsemble_BestOfFamily_AutoML_20210314_140016"
+
+predict model: "StackedEnsemble_BestOfFamily_AutoML_20210314_140016", frame: "test_data_sid_b738_3", predictions_frame: "prediction-3424ca9f-efad-4425-b407-6848ce92b022"
+
+getFrameSummary "prediction-3424ca9f-efad-4425-b407-6848ce92b022"
+
+runAutoML {"build_control":{"project_name":"Auto ML - Test Data","nfolds":5,"balance_classes":false,"stopping_criteria":{"seed":1008,"max_models":0,"max_runtime_secs":0,"max_runtime_secs_per_model":0,"stopping_rounds":3,"stopping_metric":"AUTO","stopping_tolerance":-1},"keep_cross_validation_predictions":true,"keep_cross_validation_models":true,"keep_cross_validation_fold_assignment":false},"input_spec":{"training_frame":"traindata_sid_b738_1","response_column":"High_Performer","validation_frame":"traindata_sid_b738_1","ignored_columns":["UNIQUE_ID","Overall_Rating","Technical_Skills","Teamwork","Customer_Service","Hire_Again","Protected_Group","Retained","SJ_Most_1","SJ_Least_1","SJ_Time_1","SJ_Most_2","SJ_Most_3","SJ_Time_3","SJ_Most_4","SJ_Time_4","SJ_Time_5","SJ_Most_6","SJ_Time_6","SJ_Most_7","SJ_Least_7","SJ_Most_8","SJ_Least_8","SJ_Most_9","SJ_Least_9","SJ_Time_9","Scenario1_1","Scenario1_2","Scenario1_3","Scenario1_4","Scenario1_5","Scenario1_6","Scenario1_7","Scenario1_8","Scenario2_3","Scenario2_5","Scenario2_6","Scenario2_8","Biodata_03","Biodata_05","Biodata_07","Biodata_09","Biodata_11","Biodata_12","Biodata_13","Biodata_15","Biodata_16","Biodata_20","PScale01_Q1","PScale01_Q4","PScale02_Q1","PScale02_Q2","PScale02_Q3","PScale03_Q4","PScale04_Q1","PScale04_Q3","PScale04_Q4","PScale05_Q1","PScale06_Q1","PScale06_Q3","PScale06_Q4","PScale06_Q5","PScale06_Q6","PScale07_Q1","PScale07_Q2","PScale07_Q4","PScale08_Q1","PScale08_Q2","PScale08_Q4","PScale09_Q1","PScale09_Q2","PScale09_Q3","PScale09_Q4","PScale10_Q1","PScale10_Q3","PScale10_Q4","PScale11_Q2","PScale11_Q4","PScale12_Q1","PScale12_Q3","PScale12_Q4","PScale13_Q1","PScale13_Q2","PScale13_Q3","PScale13_Q4","split"],"sort_metric":"AUTO"},"build_models":{"exclude_algos":[],"exploitation_ratio":0,"monotone_constraints":[]}}, 'exec'
+
+getLeaderboard "Auto ML - Test Data@@High_Performer"
+
+getModel "StackedEnsemble_AllModels_AutoML_20210314_151129"
+	
+predict model: "StackedEnsemble_AllModels_AutoML_20210314_151129"
+
+predict model: "StackedEnsemble_AllModels_AutoML_20210314_151129", frame: "test_data_sid_b738_3", predictions_frame: "prediction-bb9e9b86-673e-4338-8e92-4b39651b50fe"
+
+getFrameSummary "prediction-bb9e9b86-673e-4338-8e92-4b39651b50fe"
+
+predict model: "StackedEnsemble_BestOfFamily_AutoML_20210314_140016"
+
+predict model: "StackedEnsemble_BestOfFamily_AutoML_20210314_140016", frame: "participant_test1.hex", predictions_frame: "prediction-1e9a3bcf-3fe8-4f81-9054-4ac1189d3169"
+
+getFrameSummary "prediction-1e9a3bcf-3fe8-4f81-9054-4ac1189d3169"
+
+getModel "StackedEnsemble_BestOfFamily_AutoML_20210314_151129"
+
+predict model: "StackedEnsemble_BestOfFamily_AutoML_20210314_151129"
+
+predict model: "StackedEnsemble_BestOfFamily_AutoML_20210314_151129", frame: "test_data_sid_b738_3", predictions_frame: "prediction-a9305497-faa2-48d3-9d50-e0fda22a94cc"
+
+getFrameSummary "prediction-a9305497-faa2-48d3-9d50-e0fda22a94cc"
+
+assist
