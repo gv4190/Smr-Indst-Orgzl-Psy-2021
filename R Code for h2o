@@ -1,0 +1,289 @@
+########################Step 1: Set up Working Directory#############################
+
+setwd("~/Desktop/Graduate Classes/Winter 2021/Big Data/Machine Learning")
+getwd
+
+
+########################Step 2: Load in CSV##########################################
+
+traindata<-read.csv("train.csv")
+test_data<-read.csv("participant_dev.csv")
+
+#############################Step 3: Load in H2o #######################################
+# The following two commands remove any previously installed H2O packages for R.
+if ("package:h2o" %in% search()) { detach("package:h2o", unload=TRUE) }
+if ("h2o" %in% rownames(installed.packages())) { remove.packages("h2o") }
+
+# Next, we download packages that H2O depends on.
+pkgs <- c("RCurl","jsonlite")
+for (pkg in pkgs) {
+  if (! (pkg %in% rownames(installed.packages()))) { install.packages(pkg) }
+}
+
+# Now we download, install and initialize the H2O package for R.
+install.packages("h2o", type="source", repos="http://h2o-release.s3.amazonaws.com/h2o/rel-zermelo/4/R")
+
+# Finally, let's load H2O and start up an H2O cluster
+library(h2o)
+h2o.init()
+
+assist
+
+############################ Step 4 Importing Data to H2o ###################################
+importFiles [ "Desktop/Graduate Classes/Winter 2021/Big Data/Machine Learning/participant_dev.csv","Desktop/Graduate Classes/Winter 2021/Big Data/Machine Learning/train.csv" ]
+importFiles [ "Desktop/Graduate Classes/Winter 2021/Big Data/Machine Learning/Final Data " ]
+
+getFrames
+
+
+########################## Step 5 Inspect the data #########################
+inspect getFrameSummary "test_data_sid_b738_3"
+inspect getFrameSummary "traindata_sid_b738_1"
+
+#convert the participant_test because it did not read in properly
+parseFiles
+source_frames: ["nfs://Users/shannonrowley/Desktop/Graduate Classes/Winter 2021/Big Data/Machine Learning/Final Data /participant_test.csv"]
+destination_frame: "participant_test.hex"
+parse_type: "CSV"
+separator: 44
+number_columns: 122
+single_quotes: false
+column_names: ["UNIQUE_ID","SJ_Most_1","SJ_Least_1","SJ_Time_1","SJ_Most_2","SJ_Least_2","SJ_Time_2","SJ_Most_3","SJ_Least_3","SJ_Time_3","SJ_Most_4","SJ_Least_4","SJ_Time_4","SJ_Most_5","SJ_Least_5","SJ_Time_5","SJ_Most_6","SJ_Least_6","SJ_Time_6","SJ_Most_7","SJ_Least_7","SJ_Time_7","SJ_Most_8","SJ_Least_8","SJ_Time_8","SJ_Most_9","SJ_Least_9","SJ_Time_9","Scenario1_1","Scenario1_2","Scenario1_3","Scenario1_4","Scenario1_5","Scenario1_6","Scenario1_7","Scenario1_8","Scenario1_Time","Scenario2_1","Scenario2_2","Scenario2_3","Scenario2_4","Scenario2_5","Scenario2_6","Scenario2_7","Scenario2_8","Scenario2_Time","Biodata_01","Biodata_02","Biodata_03","Biodata_04","Biodata_05","Biodata_06","Biodata_07","Biodata_08","Biodata_09","Biodata_10","Biodata_11","Biodata_12","Biodata_13","Biodata_14","Biodata_15","Biodata_16","Biodata_17","Biodata_18","Biodata_19","Biodata_20","PScale01_Q1","PScale01_Q2","PScale01_Q3","PScale01_Q4","PScale02_Q1","PScale02_Q2","PScale02_Q3","PScale02_Q4","PScale03_Q1","PScale03_Q2","PScale03_Q3","PScale03_Q4","PScale04_Q1","PScale04_Q2","PScale04_Q3","PScale04_Q4","PScale05_Q1","PScale05_Q2","PScale05_Q3","PScale05_Q4","PScale06_Q1","PScale06_Q2","PScale06_Q3","PScale06_Q4","PScale06_Q5","PScale06_Q6","PScale07_Q1","PScale07_Q2","PScale07_Q3","PScale07_Q4","PScale08_Q1","PScale08_Q2","PScale08_Q3","PScale08_Q4","PScale09_Q1","PScale09_Q2","PScale09_Q3","PScale09_Q4","PScale10_Q1","PScale10_Q2","PScale10_Q3","PScale10_Q4","PScale11_Q1","PScale11_Q2","PScale11_Q3","PScale11_Q4","PScale12_Q1","PScale12_Q2","PScale12_Q3","PScale12_Q4","PScale13_Q1","PScale13_Q2","PScale13_Q3","PScale13_Q4","PScale13_Q5","split"]
+column_types: ["Enum","Enum","Enum","Numeric","Enum","Enum","Numeric","Enum","Enum","Numeric","Enum","Enum","Numeric","Enum","Enum","Numeric","Enum","Enum","Numeric","Enum","Enum","Numeric","Enum","Enum","Numeric","Enum","Enum","Numeric","Enum","Enum","Enum","Enum","Enum","Enum","Enum","Enum","Numeric","Enum","Enum","Enum","Enum","Enum","Enum","Enum","Enum","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Enum"]
+delete_on_done: true
+check_header: 1
+chunk_size: 37689
+
+###########################Practice Building 1 model##############################
+buildModel 'gbm', {"model_id":"gbm-64c74566-c74c-438d-9945-baead444c1b0","training_frame":"traindata_sid_b738_1","validation_frame":"traindata_sid_b738_1","nfolds":10,"response_column":"Retained","ignored_columns":["UNIQUE_ID","Overall_Rating","Technical_Skills","Teamwork","Customer_Service","Hire_Again","High_Performer","Protected_Group"],"ignore_const_cols":true,"ntrees":50,"max_depth":5,"min_rows":10,"nbins":20,"seed":1008,"learn_rate":0.1,"sample_rate":1,"col_sample_rate":1,"score_each_iteration":false,"score_tree_interval":0,"fold_assignment":"Stratified","nbins_top_level":1024,"nbins_cats":1024,"r2_stopping":1.7976931348623157e+308,"stopping_rounds":0,"stopping_metric":"AUTO","stopping_tolerance":0.001,"max_runtime_secs":0,"learn_rate_annealing":1,"distribution":"AUTO","huber_alpha":0.9,"col_sample_rate_per_tree":1,"min_split_improvement":0.00001,"histogram_type":"AUTO","categorical_encoding":"AUTO","monotone_constraints":[],"gainslift_bins":-1,"auc_type":"AUTO","keep_cross_validation_models":true,"keep_cross_validation_predictions":true,"keep_cross_validation_fold_assignment":false,"build_tree_one_node":false,"sample_rate_per_class":[],"col_sample_rate_change_per_level":1,"max_abs_leafnode_pred":1.7976931348623157e+308,"pred_noise_bandwidth":0,"calibrate_model":false,"check_constant_response":true}
+
+grid inspect "columns", getFrameSummary "traindata_sid_b738_1"
+
+##says it will take about 4 minutes to complete the model##
+getModel "gbm-64c74566-c74c-438d-9945-baead444c1b0"
+
+predict model: "gbm-64c74566-c74c-438d-9945-baead444c1b0", frame: "test_data_sid_b738_3", predictions_frame: "prediction-b26ebc6d-7296-4a41-adf4-c01a8334f0ff"
+
+getFrameSummary "prediction-b26ebc6d-7296-4a41-adf4-c01a8334f0ff"
+
+getFrameData "prediction-b26ebc6d-7296-4a41-adf4-c01a8334f0ff"
+
+### Results from this model 
+###{"Percentage_of_true_top_performers_hired": 0.467, 
+###"Percentage_of_true_retained_hired": 0.628, 
+###"Percentage_of_true_retained_top_performers_hired": 0.508, 
+###"Adverse_impact_ratio": 0.6587, 
+###"Final_score": 18.649}
+
+###########################Model 2##############################
+##use predictions from model 1##
+
+##Protected group##
+buildModel 'gbm', {"model_id":"gbm-64c74566-c74c-438d-9945-baead444c1b0","training_frame":"traindata_sid_b738_1","validation_frame":"traindata_sid_b738_1","nfolds":10,"response_column":"Protected_Group","ignored_columns":["UNIQUE_ID","Overall_Rating","Technical_Skills","Teamwork","Customer_Service","Hire_Again","High_Performer"],"ignore_const_cols":true,"ntrees":50,"max_depth":5,"min_rows":10,"nbins":20,"seed":1008,"learn_rate":0.1,"sample_rate":1,"col_sample_rate":1,"score_each_iteration":false,"score_tree_interval":0,"fold_assignment":"Stratified","nbins_top_level":1024,"nbins_cats":1024,"r2_stopping":1.7976931348623157e+308,"stopping_rounds":0,"stopping_metric":"AUTO","stopping_tolerance":0.001,"max_runtime_secs":0,"learn_rate_annealing":1,"distribution":"AUTO","huber_alpha":0.9,"col_sample_rate_per_tree":1,"min_split_improvement":0.00001,"histogram_type":"AUTO","categorical_encoding":"AUTO","monotone_constraints":[],"gainslift_bins":-1,"auc_type":"AUTO","keep_cross_validation_models":true,"keep_cross_validation_predictions":true,"keep_cross_validation_fold_assignment":false,"build_tree_one_node":false,"sample_rate_per_class":[],"col_sample_rate_change_per_level":1,"max_abs_leafnode_pred":1.7976931348623157e+308,"pred_noise_bandwidth":0,"calibrate_model":false,"check_constant_response":true}
+##run time was 6:11:673
+getModel "gbm-64c74566-c74c-438d-9945-baead444c1b0"
+
+#predict# 
+predict model: "gbm-64c74566-c74c-438d-9945-baead444c1b0", frame: "test_data_sid_b738_3", predictions_frame: "prediction-88ad75d0-863a-48e1-8530-ddb368937c31"
+getFrameData "prediction-88ad75d0-863a-48e1-8530-ddb368937c31"
+
+
+#AUTOML 1st attempt#
+runAutoML {"build_control":{"project_name":"Beginner ML - 1 Auto ML","nfolds":10,"balance_classes":true,"stopping_criteria":{"seed":1008,"max_models":0,"max_runtime_secs":0,"max_runtime_secs_per_model":0,"stopping_rounds":3,"stopping_metric":"AUTO","stopping_tolerance":-1},"class_sampling_factors":[],"max_after_balance_size":5,"keep_cross_validation_predictions":true,"keep_cross_validation_models":true,"keep_cross_validation_fold_assignment":false},"input_spec":{"training_frame":"traindata_sid_b738_1","response_column":"Retained","validation_frame":"traindata_sid_b738_1","fold_column":"Protected_Group","ignored_columns":["UNIQUE_ID","Overall_Rating","Technical_Skills","Teamwork","Customer_Service","Hire_Again","High_Performer"],"sort_metric":"AUTO"},"build_models":{"exclude_algos":[],"exploitation_ratio":0,"monotone_constraints":[]}}, 'exec'
+
+getLeaderboard "Beginner ML - 1 Auto ML@@Retained"
+#said the model could not run in the run-time specified 
+
+
+#GBM with high performer# 
+buildModel 'gbm', {"model_id":"gbm-ce28835a-a16b-4010-9ae8-33deeb60bc39","training_frame":"traindata_sid_b738_1","validation_frame":"traindata_sid_b738_1","nfolds":10,"response_column":"High_Performer","ignored_columns":["UNIQUE_ID","Overall_Rating","Technical_Skills","Teamwork","Customer_Service","Hire_Again","Protected_Group","Retained"],"ignore_const_cols":true,"ntrees":50,"max_depth":5,"min_rows":10,"nbins":20,"seed":-1008,"learn_rate":0.1,"sample_rate":1,"col_sample_rate":1,"score_each_iteration":false,"score_tree_interval":0,"fold_assignment":"AUTO","nbins_top_level":1024,"nbins_cats":1024,"r2_stopping":1.7976931348623157e+308,"stopping_rounds":0,"stopping_metric":"AUTO","stopping_tolerance":0.001,"max_runtime_secs":0,"learn_rate_annealing":1,"distribution":"AUTO","huber_alpha":0.9,"col_sample_rate_per_tree":1,"min_split_improvement":0.00001,"histogram_type":"AUTO","categorical_encoding":"AUTO","monotone_constraints":[],"gainslift_bins":-1,"auc_type":"AUTO","keep_cross_validation_models":true,"keep_cross_validation_predictions":true,"keep_cross_validation_fold_assignment":false,"build_tree_one_node":false,"sample_rate_per_class":[],"col_sample_rate_change_per_level":1,"max_abs_leafnode_pred":1.7976931348623157e+308,"pred_noise_bandwidth":0,"calibrate_model":false,"check_constant_response":true}
+
+#average out the 3 GBM's 
+#{"Percentage_of_true_top_performers_hired": 0.498, 
+#"Percentage_of_true_retained_hired": 0.582, 
+#"Percentage_of_true_retained_top_performers_hired": 0.52, 
+#"Adverse_impact_ratio": 0.9809, 
+#"Final_score": 51.1104}
+
+#######################MODEL 3 ###############################
+
+###Build Random Forest Model###
+buildModel 'drf', {"model_id":"drf-7d582615-e91e-4a48-bbb5-0da4a9268f28","training_frame":"traindata_sid_b738_1","validation_frame":"traindata_sid_b738_1","nfolds":10,"response_column":"Retained","ignored_columns":["UNIQUE_ID","Overall_Rating","Technical_Skills","Teamwork","Customer_Service","Hire_Again","High_Performer","Protected_Group"],"ignore_const_cols":true,"ntrees":50,"max_depth":40,"min_rows":5,"nbins":20,"seed":-1,"mtries":-1,"sample_rate":0.632,"score_each_iteration":false,"score_tree_interval":0,"fold_assignment":"AUTO","nbins_top_level":1024,"nbins_cats":1024,"r2_stopping":1.7976931348623157e+308,"stopping_rounds":0,"stopping_metric":"AUTO","stopping_tolerance":0.001,"max_runtime_secs":0,"col_sample_rate_per_tree":1,"min_split_improvement":0.00001,"histogram_type":"AUTO","categorical_encoding":"AUTO","distribution":"AUTO","gainslift_bins":-1,"auc_type":"AUTO","keep_cross_validation_models":true,"keep_cross_validation_predictions":true,"keep_cross_validation_fold_assignment":false,"build_tree_one_node":false,"sample_rate_per_class":[],"binomial_double_trees":true,"col_sample_rate_change_per_level":1,"calibrate_model":false,"check_constant_response":true}
+
+getModel "drf-7d582615-e91e-4a48-bbb5-0da4a9268f28"
+
+##predict from random forest Model###
+predict model: "drf-7d582615-e91e-4a48-bbb5-0da4a9268f28", frame: "test_data_sid_b738_3", predictions_frame: "prediction-d50a4fbb-f12e-48cc-8c48-5534e5ce3399"
+
+getFrameSummary "prediction-d50a4fbb-f12e-48cc-8c48-5534e5ce3399"
+
+exportFrame "prediction-d50a4fbb-f12e-48cc-8c48-5534e5ce3399"
+
+###Build Deep Learning Model  - Retained ####
+buildModel 'deeplearning', {"model_id":"deeplearning-3c5bcc78-8e1d-4967-9e47-965037bee9a1","training_frame":"traindata_sid_b738_1","validation_frame":"traindata_sid_b738_1","nfolds":10,"response_column":"Retained","ignored_columns":["UNIQUE_ID","Overall_Rating","Technical_Skills","Teamwork","Customer_Service","Hire_Again","High_Performer","Protected_Group","split"],"ignore_const_cols":true,"activation":"Rectifier","hidden":[200,200],"epochs":10,"variable_importances":true,"fold_assignment":"AUTO","score_each_iteration":false,"use_all_factor_levels":true,"standardize":true,"train_samples_per_iteration":-2,"adaptive_rate":true,"input_dropout_ratio":0,"l1":0,"l2":0,"loss":"Automatic","distribution":"AUTO","huber_alpha":0.9,"score_interval":5,"score_training_samples":10000,"score_validation_samples":0,"score_duty_cycle":0.1,"stopping_rounds":5,"stopping_metric":"AUTO","stopping_tolerance":0,"max_runtime_secs":0,"autoencoder":false,"categorical_encoding":"AUTO","auc_type":"AUTO","keep_cross_validation_models":true,"keep_cross_validation_predictions":true,"keep_cross_validation_fold_assignment":false,"target_ratio_comm_to_comp":0.05,"seed":1008,"rho":0.99,"epsilon":1e-8,"nesterov_accelerated_gradient":true,"max_w2":3.4028235e+38,"initial_weight_distribution":"UniformAdaptive","regression_stop":0.000001,"diagnostics":true,"fast_mode":true,"force_load_balance":true,"single_node_mode":false,"shuffle_training_data":false,"missing_values_handling":"MeanImputation","quiet_mode":false,"sparse":false,"col_major":false,"average_activation":0,"sparsity_beta":0,"max_categorical_features":2147483647,"reproducible":false,"export_weights_and_biases":false,"mini_batch_size":1,"elastic_averaging":false}
+
+getModel "deeplearning-3c5bcc78-8e1d-4967-9e47-965037bee9a1"
+
+predict model: "deeplearning-3c5bcc78-8e1d-4967-9e47-965037bee9a1", frame: "test_data_sid_b738_3", predictions_frame: "prediction-2749ef7c-49db-4f3e-a738-5c1ccac9d166"
+
+getFrameSummary "prediction-2749ef7c-49db-4f3e-a738-5c1ccac9d166"
+
+### Build Random Forest - Protected Group ###
+buildModel 'drf', {"model_id":"drf-04be70ee-67ba-4c7b-9a56-7e6474033428","training_frame":"traindata_sid_b738_1","validation_frame":"traindata_sid_b738_1","nfolds":10,"response_column":"Protected_Group","ignored_columns":["UNIQUE_ID","Overall_Rating","Technical_Skills","Teamwork","Customer_Service","Hire_Again","High_Performer","Retained","split"],"ignore_const_cols":true,"ntrees":50,"max_depth":20,"min_rows":1,"nbins":20,"seed":-1008,"mtries":-1,"sample_rate":0.632,"score_each_iteration":false,"score_tree_interval":0,"fold_assignment":"AUTO","nbins_top_level":1024,"nbins_cats":1024,"r2_stopping":1.7976931348623157e+308,"stopping_rounds":0,"stopping_metric":"AUTO","stopping_tolerance":0.001,"max_runtime_secs":0,"col_sample_rate_per_tree":1,"min_split_improvement":0.00001,"histogram_type":"AUTO","categorical_encoding":"AUTO","distribution":"AUTO","gainslift_bins":-1,"auc_type":"AUTO","keep_cross_validation_models":true,"keep_cross_validation_predictions":true,"keep_cross_validation_fold_assignment":false,"build_tree_one_node":false,"sample_rate_per_class":[],"binomial_double_trees":false,"col_sample_rate_change_per_level":1,"calibrate_model":false,"check_constant_response":true}
+
+getModel "drf-04be70ee-67ba-4c7b-9a56-7e6474033428"
+
+predict model: "drf-04be70ee-67ba-4c7b-9a56-7e6474033428", frame: "test_data_sid_b738_3", predictions_frame: "RF - Protected Group"
+
+getFrameSummary "RF - Protected Group"
+
+### Build Random Forest High Performer ###
+buildModel 'drf', {"model_id":"drf-3f7e69e0-a75d-4c37-ab08-3a8bfa488b85","training_frame":"traindata_sid_b738_1","validation_frame":"traindata_sid_b738_1","nfolds":10,"response_column":"High_Performer","ignored_columns":["UNIQUE_ID","Overall_Rating","Technical_Skills","Teamwork","Customer_Service","Hire_Again","Protected_Group","Retained","split"],"ignore_const_cols":true,"ntrees":50,"max_depth":20,"min_rows":1,"nbins":20,"seed":1008,"mtries":-1,"sample_rate":0.632,"score_each_iteration":false,"score_tree_interval":0,"fold_assignment":"AUTO","nbins_top_level":1024,"nbins_cats":1024,"r2_stopping":1.7976931348623157e+308,"stopping_rounds":0,"stopping_metric":"AUTO","stopping_tolerance":0.001,"max_runtime_secs":0,"col_sample_rate_per_tree":1,"min_split_improvement":0.00001,"histogram_type":"AUTO","categorical_encoding":"AUTO","distribution":"AUTO","gainslift_bins":-1,"auc_type":"AUTO","keep_cross_validation_models":true,"keep_cross_validation_predictions":true,"keep_cross_validation_fold_assignment":false,"build_tree_one_node":false,"sample_rate_per_class":[],"binomial_double_trees":false,"col_sample_rate_change_per_level":1,"calibrate_model":false,"check_constant_response":true}
+
+getModel "drf-3f7e69e0-a75d-4c37-ab08-3a8bfa488b85"
+
+predict model: "drf-3f7e69e0-a75d-4c37-ab08-3a8bfa488b85", frame: "test_data_sid_b738_3", predictions_frame: "prediction-dc6214ee-e725-4bd6-af24-761514e8d608"
+
+getFrameSummary "prediction-dc6214ee-e725-4bd6-af24-761514e8d608"
+
+### Build Deep Learning - Protected Group ###
+buildModel 'deeplearning', {"model_id":"deeplearning-a712514a-c946-4a82-b974-f9e129753014","training_frame":"traindata_sid_b738_1","validation_frame":"traindata_sid_b738_1","nfolds":10,"response_column":"Protected_Group","ignored_columns":["UNIQUE_ID","Overall_Rating","Technical_Skills","Teamwork","Customer_Service","Hire_Again","High_Performer","Retained","split"],"ignore_const_cols":true,"activation":"Rectifier","hidden":[200,200],"epochs":10,"variable_importances":true,"fold_assignment":"AUTO","score_each_iteration":false,"use_all_factor_levels":true,"standardize":true,"train_samples_per_iteration":-2,"adaptive_rate":true,"input_dropout_ratio":0,"l1":0,"l2":0,"loss":"Automatic","distribution":"AUTO","huber_alpha":0.9,"score_interval":5,"score_training_samples":10000,"score_validation_samples":0,"score_duty_cycle":0.1,"stopping_rounds":5,"stopping_metric":"AUTO","stopping_tolerance":0,"max_runtime_secs":0,"autoencoder":false,"categorical_encoding":"AUTO","auc_type":"AUTO","keep_cross_validation_models":true,"keep_cross_validation_predictions":false,"keep_cross_validation_fold_assignment":false,"target_ratio_comm_to_comp":0.05,"seed":-1,"rho":0.99,"epsilon":1e-8,"nesterov_accelerated_gradient":true,"max_w2":3.4028235e+38,"initial_weight_distribution":"UniformAdaptive","regression_stop":0.000001,"diagnostics":true,"fast_mode":true,"force_load_balance":true,"single_node_mode":false,"shuffle_training_data":false,"missing_values_handling":"MeanImputation","quiet_mode":false,"sparse":false,"col_major":false,"average_activation":0,"sparsity_beta":0,"max_categorical_features":2147483647,"reproducible":false,"export_weights_and_biases":false,"mini_batch_size":1,"elastic_averaging":false}
+
+getModel "deeplearning-a712514a-c946-4a82-b974-f9e129753014"
+
+predict model: "deeplearning-a712514a-c946-4a82-b974-f9e129753014", frame: "test_data_sid_b738_3", predictions_frame: "prediction-98384247-e71c-4609-9c1c-eb70ce1e3124"
+
+getFrameSummary "prediction-98384247-e71c-4609-9c1c-eb70ce1e3124"
+
+### Build Deep Learning - High Performer ###
+
+buildModel 'deeplearning', {"model_id":"deeplearning-5aaa185b-a6a0-4a02-80a2-44938742271e","training_frame":"traindata_sid_b738_1","validation_frame":"traindata_sid_b738_1","nfolds":10,"response_column":"High_Performer","ignored_columns":["UNIQUE_ID","Overall_Rating","Technical_Skills","Teamwork","Customer_Service","Hire_Again","Protected_Group","Retained","split"],"ignore_const_cols":true,"activation":"Rectifier","hidden":[200,200],"epochs":10,"variable_importances":true,"fold_assignment":"AUTO","score_each_iteration":false,"use_all_factor_levels":true,"standardize":true,"train_samples_per_iteration":-2,"adaptive_rate":true,"input_dropout_ratio":0,"l1":0,"l2":0,"loss":"Automatic","distribution":"AUTO","huber_alpha":0.9,"score_interval":5,"score_training_samples":10000,"score_validation_samples":0,"score_duty_cycle":0.1,"stopping_rounds":5,"stopping_metric":"AUTO","stopping_tolerance":0,"max_runtime_secs":0,"autoencoder":false,"categorical_encoding":"AUTO","auc_type":"AUTO","keep_cross_validation_models":true,"keep_cross_validation_predictions":false,"keep_cross_validation_fold_assignment":false,"target_ratio_comm_to_comp":0.05,"seed":1008,"rho":0.99,"epsilon":1e-8,"nesterov_accelerated_gradient":true,"max_w2":3.4028235e+38,"initial_weight_distribution":"UniformAdaptive","regression_stop":0.000001,"diagnostics":true,"fast_mode":true,"force_load_balance":true,"single_node_mode":false,"shuffle_training_data":false,"missing_values_handling":"MeanImputation","quiet_mode":false,"sparse":false,"col_major":false,"average_activation":0,"sparsity_beta":0,"max_categorical_features":2147483647,"reproducible":false,"export_weights_and_biases":false,"mini_batch_size":1,"elastic_averaging":false}
+
+getModel "deeplearning-5aaa185b-a6a0-4a02-80a2-44938742271e"
+
+predict model: "deeplearning-5aaa185b-a6a0-4a02-80a2-44938742271e", frame: "test_data_sid_b738_3", predictions_frame: "prediction-581984df-3465-4dce-8758-604155b47501"
+
+getFrameSummary "prediction-581984df-3465-4dce-8758-604155b47501"
+
+###Submit - Combination of GBM DL & RF Way Worse ##
+#{"Percentage_of_true_top_performers_hired": 0.541, 
+#"Percentage_of_true_retained_hired": 0.562, 
+#"Percentage_of_true_retained_top_performers_hired": 0.527, 
+#"Adverse_impact_ratio": 1.4321, 
+#"Final_score": 10.7183}
+
+###Submit - GBM - Even Worse ##
+#{"Percentage_of_true_top_performers_hired": 0.553, 
+#"Percentage_of_true_retained_hired": 0.57, 
+#"Percentage_of_true_retained_top_performers_hired": 0.525, 
+#"Adverse_impact_ratio": 1.4792, 
+#"Final_score": 6.4363}
+
+###Submit - GBM Retained, RF Protected Group, GBM Protected Group, RF High Performer WOW - TERRIBLE##
+#{"Percentage_of_true_top_performers_hired": 0.51, 
+#"Percentage_of_true_retained_hired": 0.553, 
+#"Percentage_of_true_retained_top_performers_hired": 0.489, 
+#"Adverse_impact_ratio": 1.7678, 
+#"Final_score": -25.7895}
+
+#### Model 4 - Work from Model 2 - GBM combination - GOING BACK UP ####
+#running an rf model with var importance (>.1 scaled importance) from protected group GBM on RETAINED#  
+buildModel 'gbm', {"model_id":"gbm-833533fe-3b67-4ca2-b8c5-a51982539d9f","training_frame":"traindata_sid_b738_1","validation_frame":"traindata_sid_b738_1","nfolds":10,"response_column":"Retained","ignored_columns":["UNIQUE_ID","Overall_Rating","Technical_Skills","Teamwork","Customer_Service","Hire_Again","High_Performer","Protected_Group","SJ_Most_1","SJ_Least_1","SJ_Time_1","SJ_Most_2","SJ_Most_3","SJ_Time_3","SJ_Most_4","SJ_Time_4","SJ_Time_5","SJ_Most_6","SJ_Time_6","SJ_Most_7","SJ_Least_7","SJ_Most_8","SJ_Least_8","SJ_Most_9","SJ_Least_9","SJ_Time_9","Scenario1_1","Scenario1_2","Scenario1_3","Scenario1_4","Scenario1_5","Scenario1_6","Scenario1_7","Scenario1_8","Scenario2_3","Scenario2_5","Scenario2_6","Scenario2_8","Biodata_03","Biodata_05","Biodata_07","Biodata_09","Biodata_11","Biodata_12","Biodata_13","Biodata_15","Biodata_16","Biodata_20","PScale01_Q1","PScale01_Q4","PScale02_Q1","PScale02_Q2","PScale02_Q3","PScale03_Q4","PScale04_Q1","PScale04_Q3","PScale04_Q4","PScale05_Q1","PScale06_Q1","PScale06_Q3","PScale06_Q4","PScale06_Q5","PScale06_Q6","PScale07_Q1","PScale07_Q2","PScale07_Q4","PScale08_Q1","PScale08_Q2","PScale08_Q4","PScale09_Q1","PScale09_Q2","PScale09_Q3","PScale09_Q4","PScale10_Q1","PScale10_Q3","PScale10_Q4","PScale11_Q2","PScale11_Q4","PScale12_Q1","PScale12_Q3","PScale12_Q4","PScale13_Q1","PScale13_Q2","PScale13_Q3","PScale13_Q4","split"],"ignore_const_cols":true,"ntrees":50,"max_depth":5,"min_rows":10,"nbins":20,"seed":1008,"learn_rate":0.1,"sample_rate":1,"col_sample_rate":1,"score_each_iteration":false,"score_tree_interval":0,"fold_assignment":"AUTO","nbins_top_level":1024,"nbins_cats":1024,"r2_stopping":1.7976931348623157e+308,"stopping_rounds":0,"stopping_metric":"AUTO","stopping_tolerance":0.001,"max_runtime_secs":0,"learn_rate_annealing":1,"distribution":"AUTO","huber_alpha":0.9,"col_sample_rate_per_tree":1,"min_split_improvement":0.00001,"histogram_type":"AUTO","categorical_encoding":"AUTO","monotone_constraints":[],"gainslift_bins":-1,"auc_type":"AUTO","keep_cross_validation_models":true,"keep_cross_validation_predictions":false,"keep_cross_validation_fold_assignment":false,"build_tree_one_node":false,"sample_rate_per_class":[],"col_sample_rate_change_per_level":1,"max_abs_leafnode_pred":1.7976931348623157e+308,"pred_noise_bandwidth":0,"calibrate_model":false,"check_constant_response":true}
+
+getModel "gbm-833533fe-3b67-4ca2-b8c5-a51982539d9f"
+
+predict model: "gbm-833533fe-3b67-4ca2-b8c5-a51982539d9f", frame: "test_data_sid_b738_3", predictions_frame: "prediction-d7b076e0-21a6-4600-b883-a0c60e287647"
+
+getFrameSummary "prediction-d7b076e0-21a6-4600-b883-a0c60e287647"
+#{"Percentage_of_true_top_performers_hired": 0.495, 
+#"Percentage_of_true_retained_hired": 0.582, 
+#"Percentage_of_true_retained_top_performers_hired": 0.508, 
+#"Adverse_impact_ratio": 0.9657, 
+#"Final_score": 48.8991}
+
+#run same as above except for HIGH PERFORMER - INCREMENTALLY BETTER#
+buildModel 'gbm', {"model_id":"gbm-38d8c2a8-de6e-4156-907d-4c8b9637d89e","training_frame":"traindata_sid_b738_1","validation_frame":"traindata_sid_b738_1","nfolds":10,"response_column":"High_Performer","ignored_columns":["UNIQUE_ID","Overall_Rating","Technical_Skills","Teamwork","Customer_Service","Hire_Again","Protected_Group","Retained","SJ_Most_1","SJ_Least_1","SJ_Time_1","SJ_Most_2","SJ_Most_3","SJ_Time_3","SJ_Most_4","SJ_Time_4","SJ_Time_5","SJ_Most_6","SJ_Time_6","SJ_Most_7","SJ_Least_7","SJ_Most_8","SJ_Least_8","SJ_Most_9","SJ_Least_9","SJ_Time_9","Scenario1_1","Scenario1_2","Scenario1_3","Scenario1_4","Scenario1_5","Scenario1_6","Scenario1_7","Scenario1_8","Scenario2_3","Scenario2_5","Scenario2_6","Scenario2_8","Biodata_03","Biodata_05","Biodata_07","Biodata_09","Biodata_11","Biodata_12","Biodata_13","Biodata_15","Biodata_16","Biodata_20","PScale01_Q1","PScale01_Q4","PScale02_Q1","PScale02_Q2","PScale02_Q3","PScale03_Q4","PScale04_Q1","PScale04_Q3","PScale04_Q4","PScale05_Q1","PScale06_Q1","PScale06_Q3","PScale06_Q4","PScale06_Q5","PScale06_Q6","PScale07_Q1","PScale07_Q2","PScale07_Q4","PScale08_Q1","PScale08_Q2","PScale08_Q4","PScale09_Q1","PScale09_Q2","PScale09_Q3","PScale09_Q4","PScale10_Q1","PScale10_Q3","PScale10_Q4","PScale11_Q2","PScale11_Q4","PScale12_Q1","PScale12_Q3","PScale12_Q4","PScale13_Q1","PScale13_Q2","PScale13_Q3","PScale13_Q4","split"],"ignore_const_cols":true,"ntrees":50,"max_depth":5,"min_rows":10,"nbins":20,"seed":1008,"learn_rate":0.1,"sample_rate":1,"col_sample_rate":1,"score_each_iteration":false,"score_tree_interval":0,"fold_assignment":"AUTO","nbins_top_level":1024,"nbins_cats":1024,"r2_stopping":1.7976931348623157e+308,"stopping_rounds":0,"stopping_metric":"AUTO","stopping_tolerance":0.001,"max_runtime_secs":0,"learn_rate_annealing":1,"distribution":"AUTO","huber_alpha":0.9,"col_sample_rate_per_tree":1,"min_split_improvement":0.00001,"histogram_type":"AUTO","categorical_encoding":"AUTO","monotone_constraints":[],"gainslift_bins":-1,"auc_type":"AUTO","keep_cross_validation_models":true,"keep_cross_validation_predictions":false,"keep_cross_validation_fold_assignment":false,"build_tree_one_node":false,"sample_rate_per_class":[],"col_sample_rate_change_per_level":1,"max_abs_leafnode_pred":1.7976931348623157e+308,"pred_noise_bandwidth":0,"calibrate_model":false,"check_constant_response":true}
+
+getModel "gbm-38d8c2a8-de6e-4156-907d-4c8b9637d89e"
+
+predict model: "gbm-38d8c2a8-de6e-4156-907d-4c8b9637d89e", frame: "test_data_sid_b738_3", predictions_frame: "prediction-8bfecdd6-f690-4560-9b02-8e9c4893c981"
+
+#{"Percentage_of_true_top_performers_hired": 0.513,
+#"Percentage_of_true_retained_hired": 0.595, 
+#"Percentage_of_true_retained_top_performers_hired": 0.529, 
+#"Adverse_impact_ratio": 0.9545, 
+#"Final_score": 49.5905}
+
+
+#Load in test data to submit to final#
+importFiles [ "Desktop/Graduate Classes/Winter 2021/Big Data/Machine Learning/h2o Stuff/participant_test.csv" ]
+
+setupParse source_frames: [ "nfs://Users/shannonrowley/Desktop/Graduate Classes/Winter 2021/Big Data/Machine Learning/h2o Stuff/participant_test.csv" ]
+
+parseFiles
+source_frames: ["nfs://Users/shannonrowley/Desktop/Graduate Classes/Winter 2021/Big Data/Machine Learning/h2o Stuff/participant_test.csv"]
+destination_frame: "participant_test1.hex"
+parse_type: "CSV"
+separator: 44
+number_columns: 122
+single_quotes: false
+column_names: ["UNIQUE_ID","SJ_Most_1","SJ_Least_1","SJ_Time_1","SJ_Most_2","SJ_Least_2","SJ_Time_2","SJ_Most_3","SJ_Least_3","SJ_Time_3","SJ_Most_4","SJ_Least_4","SJ_Time_4","SJ_Most_5","SJ_Least_5","SJ_Time_5","SJ_Most_6","SJ_Least_6","SJ_Time_6","SJ_Most_7","SJ_Least_7","SJ_Time_7","SJ_Most_8","SJ_Least_8","SJ_Time_8","SJ_Most_9","SJ_Least_9","SJ_Time_9","Scenario1_1","Scenario1_2","Scenario1_3","Scenario1_4","Scenario1_5","Scenario1_6","Scenario1_7","Scenario1_8","Scenario1_Time","Scenario2_1","Scenario2_2","Scenario2_3","Scenario2_4","Scenario2_5","Scenario2_6","Scenario2_7","Scenario2_8","Scenario2_Time","Biodata_01","Biodata_02","Biodata_03","Biodata_04","Biodata_05","Biodata_06","Biodata_07","Biodata_08","Biodata_09","Biodata_10","Biodata_11","Biodata_12","Biodata_13","Biodata_14","Biodata_15","Biodata_16","Biodata_17","Biodata_18","Biodata_19","Biodata_20","PScale01_Q1","PScale01_Q2","PScale01_Q3","PScale01_Q4","PScale02_Q1","PScale02_Q2","PScale02_Q3","PScale02_Q4","PScale03_Q1","PScale03_Q2","PScale03_Q3","PScale03_Q4","PScale04_Q1","PScale04_Q2","PScale04_Q3","PScale04_Q4","PScale05_Q1","PScale05_Q2","PScale05_Q3","PScale05_Q4","PScale06_Q1","PScale06_Q2","PScale06_Q3","PScale06_Q4","PScale06_Q5","PScale06_Q6","PScale07_Q1","PScale07_Q2","PScale07_Q3","PScale07_Q4","PScale08_Q1","PScale08_Q2","PScale08_Q3","PScale08_Q4","PScale09_Q1","PScale09_Q2","PScale09_Q3","PScale09_Q4","PScale10_Q1","PScale10_Q2","PScale10_Q3","PScale10_Q4","PScale11_Q1","PScale11_Q2","PScale11_Q3","PScale11_Q4","PScale12_Q1","PScale12_Q2","PScale12_Q3","PScale12_Q4","PScale13_Q1","PScale13_Q2","PScale13_Q3","PScale13_Q4","PScale13_Q5","split"]
+column_types: ["Enum","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Numeric","Enum"]
+delete_on_done: true
+check_header: 1
+chunk_size: 37689
+
+getFrameSummary "participant_test1.hex"
+
+#try to run autoML with protected group vars on retained#
+runAutoML {"build_control":{"project_name":"Auto ML - Test Data","nfolds":5,"balance_classes":false,"stopping_criteria":{"seed":1008,"max_models":0,"max_runtime_secs":0,"max_runtime_secs_per_model":0,"stopping_rounds":3,"stopping_metric":"AUTO","stopping_tolerance":-1},"keep_cross_validation_predictions":true,"keep_cross_validation_models":true,"keep_cross_validation_fold_assignment":false},"input_spec":{"training_frame":"traindata_sid_b738_1","response_column":"Retained","validation_frame":"traindata_sid_b738_1","ignored_columns":["UNIQUE_ID","Overall_Rating","Technical_Skills","Teamwork","Customer_Service","Hire_Again","High_Performer","Protected_Group","SJ_Most_1","SJ_Least_1","SJ_Time_1","SJ_Most_2","SJ_Most_3","SJ_Time_3","SJ_Most_4","SJ_Time_4","SJ_Time_5","SJ_Most_6","SJ_Time_6","SJ_Most_7","SJ_Least_7","SJ_Most_8","SJ_Least_8","SJ_Most_9","SJ_Least_9","SJ_Time_9","Scenario1_1","Scenario1_2","Scenario1_3","Scenario1_4","Scenario1_5","Scenario1_6","Scenario1_7","Scenario1_8","Scenario2_3","Scenario2_5","Scenario2_6","Scenario2_8","Biodata_03","Biodata_05","Biodata_07","Biodata_09","Biodata_11","Biodata_12","Biodata_13","Biodata_15","Biodata_16","Biodata_20","PScale01_Q1","PScale01_Q4","PScale02_Q1","PScale02_Q2","PScale02_Q3","PScale03_Q4","PScale04_Q1","PScale04_Q3","PScale04_Q4","PScale05_Q1","PScale06_Q1","PScale06_Q3","PScale06_Q4","PScale06_Q5","PScale06_Q6","PScale07_Q1","PScale07_Q2","PScale07_Q4","PScale08_Q1","PScale08_Q2","PScale08_Q4","PScale09_Q1","PScale09_Q2","PScale09_Q3","PScale09_Q4","PScale10_Q1","PScale10_Q3","PScale10_Q4","PScale11_Q2","PScale11_Q4","PScale12_Q1","PScale12_Q3","PScale12_Q4","PScale13_Q1","PScale13_Q2","PScale13_Q3","PScale13_Q4","split"],"sort_metric":"AUTO"},"build_models":{"exclude_algos":[],"exploitation_ratio":0,"monotone_constraints":[]}}, 'exec'
+
+getModel "StackedEnsemble_BestOfFamily_AutoML_20210314_140016"
+
+predict model: "StackedEnsemble_BestOfFamily_AutoML_20210314_140016", frame: "test_data_sid_b738_3", predictions_frame: "prediction-3424ca9f-efad-4425-b407-6848ce92b022"
+
+#{"Percentage_of_true_top_performers_hired": 0.503, 
+#"Percentage_of_true_retained_hired": 0.573, 
+#"Percentage_of_true_retained_top_performers_hired": 0.501, 
+#"Adverse_impact_ratio": 1.0039, 
+#"Final_score": 51.5615}
+
+#run autoML with protected group vars on high performer#
+runAutoML {"build_control":{"project_name":"Auto ML - Test Data","nfolds":5,"balance_classes":false,"stopping_criteria":{"seed":1008,"max_models":0,"max_runtime_secs":0,"max_runtime_secs_per_model":0,"stopping_rounds":3,"stopping_metric":"AUTO","stopping_tolerance":-1},"keep_cross_validation_predictions":true,"keep_cross_validation_models":true,"keep_cross_validation_fold_assignment":false},"input_spec":{"training_frame":"traindata_sid_b738_1","response_column":"High_Performer","validation_frame":"traindata_sid_b738_1","ignored_columns":["UNIQUE_ID","Overall_Rating","Technical_Skills","Teamwork","Customer_Service","Hire_Again","Protected_Group","Retained","SJ_Most_1","SJ_Least_1","SJ_Time_1","SJ_Most_2","SJ_Most_3","SJ_Time_3","SJ_Most_4","SJ_Time_4","SJ_Time_5","SJ_Most_6","SJ_Time_6","SJ_Most_7","SJ_Least_7","SJ_Most_8","SJ_Least_8","SJ_Most_9","SJ_Least_9","SJ_Time_9","Scenario1_1","Scenario1_2","Scenario1_3","Scenario1_4","Scenario1_5","Scenario1_6","Scenario1_7","Scenario1_8","Scenario2_3","Scenario2_5","Scenario2_6","Scenario2_8","Biodata_03","Biodata_05","Biodata_07","Biodata_09","Biodata_11","Biodata_12","Biodata_13","Biodata_15","Biodata_16","Biodata_20","PScale01_Q1","PScale01_Q4","PScale02_Q1","PScale02_Q2","PScale02_Q3","PScale03_Q4","PScale04_Q1","PScale04_Q3","PScale04_Q4","PScale05_Q1","PScale06_Q1","PScale06_Q3","PScale06_Q4","PScale06_Q5","PScale06_Q6","PScale07_Q1","PScale07_Q2","PScale07_Q4","PScale08_Q1","PScale08_Q2","PScale08_Q4","PScale09_Q1","PScale09_Q2","PScale09_Q3","PScale09_Q4","PScale10_Q1","PScale10_Q3","PScale10_Q4","PScale11_Q2","PScale11_Q4","PScale12_Q1","PScale12_Q3","PScale12_Q4","PScale13_Q1","PScale13_Q2","PScale13_Q3","PScale13_Q4","split"],"sort_metric":"AUTO"},"build_models":{"exclude_algos":[],"exploitation_ratio":0,"monotone_constraints":[]}}, 'exec'
+
+getModel "StackedEnsemble_AllModels_AutoML_20210314_151129"
+
+predict model: "StackedEnsemble_AllModels_AutoML_20210314_151129", frame: "test_data_sid_b738_3", predictions_frame: "prediction-bb9e9b86-673e-4338-8e92-4b39651b50fe"
+
+####OMG####
+#{"Percentage_of_true_top_performers_hired": 0.621, 
+#"Percentage_of_true_retained_hired": 0.567, 
+#"Percentage_of_true_retained_top_performers_hired": 0.61, 
+#"Adverse_impact_ratio": 1.0039, 
+#"Final_score": 59.8002}
+
+#what I want to do - combine 2 Auto ML & submit # worse
+#see outcome 
+#{"Percentage_of_true_top_performers_hired": 0.603, 
+#"Percentage_of_true_retained_hired": 0.595, 
+#"Percentage_of_true_retained_top_performers_hired": 0.601, 
+#"Adverse_impact_ratio": 0.7932, 
+#"Final_score": 39.3028}
+
+#submit just AutoML 2 
+#see outcome
+#{"Percentage_of_true_top_performers_hired": 0.621, 
+#"Percentage_of_true_retained_hired": 0.567, 
+#"Percentage_of_true_retained_top_performers_hired": 0.61, 
+#"Adverse_impact_ratio": 1.0039, 
+#"Final_score": 59.8002}
+
+#combine 1st auto ML + Final Model 4 - High Perf + Ret Comb
+#see outcome
+
+#predict on final data set
+
+predict model: "StackedEnsemble_BestOfFamily_AutoML_20210314_140016", frame: "participant_test1.hex", predictions_frame: "prediction-1e9a3bcf-3fe8-4f81-9054-4ac1189d3169"
+getFrameSummary "prediction-1e9a3bcf-3fe8-4f81-9054-4ac1189d3169"
+
+#{"Final_score": 15.7235} :( Not sure how to make this better given just the final score 
