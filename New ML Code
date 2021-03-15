@@ -1,0 +1,188 @@
+########################Step 1: Set up Working Directory#############################
+
+setwd("~/Desktop/Graduate Classes/Winter 2021/Big Data/Machine Learning")
+getwd
+
+
+########################Step 2: Load in CSV##########################################
+
+traindata<-read.csv("train.csv")
+test_data<-read.csv("participant_dev.csv")
+
+########################Step 3: Load in necessary packages###########################
+
+library(plyr)
+library(caret)
+install.packages("mice")
+library(mice)
+library(dplyr)
+install.packages("keras")
+library(keras)
+
+
+########################Step 4: Review necessary information about data###############
+
+#  This dataset contains 49,102 hires made in a group of retail stores over a period of several
+#  months. Special validation-only performance ratings were collected for a sample (N=12,890)
+#  of these hires. We included data for the entire cohort because part of the task is to create
+#  a predictor of retention; to do this effectively you might choose to use all the data for 
+#  all exits, not just for employees who were retained long enough to have their performance 
+#  evaluated.
+
+colnames(traindata)
+tail (traindata)
+dim (traindata)
+psych::corr.test(traindata[c(2:129)])$r #quick peak at relationships
+
+
+########################Step 5: Standardize the data##################################
+
+#training set#
+traindata[c(12, 15, 18, 21, 24, 27, 30, 33, 36, 45, 54)]<-scale(traindata[c(12, 15, 18, 21, 24, 27, 30, 33, 36, 45, 54)])
+#testing set#
+test_data[c(4, 7, 10, 13, 16, 19, 22, 25, 28, 37, 46)]<-scale(test_data[c(3, 6, 9, 12, 15, 18, 21, 24, 27, 36, 45)])
+
+############################Step 6: Set up training data##############################
+
+
+###########Step 6a: Select complete observations (some data within the criterion variables)############
+
+df1<-traindata[complete.cases(traindata[2]),]
+
+###########Step 6b: Split data into predictor/criterion/fairness variable#############
+
+tcrit<-subset(df1[c("UNIQUE_ID", "Overall_Rating","Technical_Skills","Teamwork","Customer_Service","Hire_Again","High_Performer","Protected_Group","Retained")])
+#tpred<-subset(df1[c(10:129)])
+tpred<-read.csv("Imputed Train Predictor Data.csv")
+#   orginal code : subset(df1[c(10:129)])
+tpred<-tpred[,-1] #remove uneccesary column created in .csv file
+tpred<-cbind(df1$UNIQUE_ID, tpred)
+names(tpred)[names(tpred) == "df1$UNIQUE_ID"] <- "UNIQUE_ID"
+
+sum(is.na.data.frame(tpred)) #check for any missing data - after running imputation method (Step 6c)
+
+##################Step 6c: Data Imputation - removed from code (DO NOT RE-RUN - USE CSV FILE#####################
+
+#set.seed(1008)
+#tempData<-mice(data = tpred, m = 3, method = "rf", maxit = 3, seed = 1008, where = is.na(tpred)) #random forest imputation
+#tpred<-complete(tempData)
+#sum(is.na.data.frame(tpred))
+#export to make sure dont have to re-run
+#write.csv(tpred, "~/Desktop/Graduate Classes/Winter 2021/Big Data/Machine Learning/NEW Imputed Train Predictor Data.csv")
+
+tempData<-mice(data = test_data, m = 3, method = "rf", maxit = 3, seed = 1008, where = is.na(test_data)) #random forest imputation
+rftest<-complete(tempData)
+sum(is.na(rftest))
+tempData<-mice(data = rftest, m = 3, method = "rf", maxit = 3, seed = 1008, where = is.na(test_data)) #random forest imputation
+rftest<-complete(tempData)
+sum(is.na(rftest))
+#########################Step 7a: Visualize our criterion training variables###############################
+
+#These are on 5-point scales - removing outliers would be nonsensical
+hist(tcrit$Overall_Rating) # normal distribution
+hist(tcrit$Technical_Skills) # normal distribution
+hist(tcrit$Teamwork) #normal distribution
+hist(tcrit$Customer_Service) #normal distribution
+hist(tcrit$Hire_Again) # slight left skew - this variable will likely have some good information
+
+#########################Step 7b: Transform Dichotomous Var to Factors (train data) #############################
+
+?make.names
+
+#tcrit$High_Performer<- ifelse (tcrit$High_Performer==1, 'High', 'Not.High')
+tcrit$High_Performer<- as.factor(tcrit$High_Performer) 
+table(tcrit$High_Performer) # 1 = High, 0 = Not High
+
+#tcrit$Protected_Group<- ifelse (tcrit$Protected_Group==1, 'Protected.Group', 'Not')
+tcrit$Protected_Group<- as.factor(tcrit$Protected_Group) # 1 = Protected Group , 0 = Not
+table(tcrit$Protected_Group)
+
+#tcrit$Retained<- ifelse (tcrit$Retained==1, 'Retained', 'Termed')
+tcrit$Retained<- as.factor(tcrit$Retained) # 1 Retained, 2 = Termed 
+table (tcrit$Retained)
+
+#########################Step 7c: Correlation between continuous criterion training variables########################
+
+psych::corr.test(tcrit[c(2:6)])$r #quick peak at relationships
+#                 Overall_Rating Technical_Skills  Teamwork Customer_Service Hire_Again
+#Overall_Rating        1.0000000        0.8443307 0.7915360        0.7364080  0.7522666
+#Technical_Skills      0.8443307        1.0000000 0.7471580        0.7039324  0.6847192
+#Teamwork              0.7915360        0.7471580 1.0000000        0.7699340  0.7026442
+#Customer_Service      0.7364080        0.7039324 0.7699340        1.0000000  0.6498943
+#Hire_Again            0.7522666        0.6847192 0.7026442        0.6498943  1.0000000
+
+####################### Re-Grouping ############################
+tcrit[c(2:6)]<-scale(tcrit[c(2:6)])
+tpred<-tpred[,-1] #remove UNIQUE ID WHEN COMBINING 2 pred
+TRAIN<-cbind(tcrit,tpred)
+
+###################### Random Forest ############################
+
+set.seed(2033) #set
+fold.ids <- createMultiFolds(TRAIN$Retained,k=10,times=1) #balances the outcome
+
+tunegrid <- expand.grid (.mtry= c(2:15)  ) #mtry options#
+control <- trainControl(method="repeatedcv", number=10, repeats=1, index = fold.ids, classProbs = T, summaryFunction = multiClassSummary,
+                        search="grid", selectionFunction = "best", verboseIter = TRUE)
+
+fit2 <- randomForest::randomForest (x = as.data.frame(TRAIN[,10:ncol(TRAIN)]), y = TRAIN$Retained, method="rf", ntree=500, nodesize=5,  metric="Accuracy", tuneGrid=tunegrid, trControl=control, standardize=FALSE)
+fit2 #super high error rate 43.3%
+
+################Try a model with most important variables from Elastic Net################
+            #   imp     col
+#Biodata_10     0.03031 64 
+#Biodata_04     0.02949 58
+#PScale06_Q3    0.02821 89
+#PScale04_Q3    0.02326 97
+#SJ_Least_8     0.02265 32
+#PScale11_Q4    0.02167 120
+#PScale07_Q2    0.02023 102
+#PScale03_Q4    0.01940 86
+#SJ_Most_6      0.01917 25
+#PScale11_Q3    0.01789 119
+#PScale05_Q1    0.01765 91
+#PScale02_Q1    0.01725 79
+#Scenario1_Time 0.01707 45
+#PScale05_Q4    0.01672 94
+#PScale06_Q2    0.01606 96
+#PScale01_Q4    0.01599 78
+#Scenario2_1    0.01558 46
+#Biodata_08     0.01556 62
+#PScale06_Q1    0.01544 95
+#PScale05_Q2    0.01511 92
+
+#64, 58, 89, 97, 32, 120, 102, 86, 25, 119, 91, 79, 45, 94, 96, 78, 46, 62, 95, 92
+###################### Random Forest with EN variables############################
+
+set.seed(2033) #set
+fold.ids <- createMultiFolds(TRAIN$Retained,k=10,times=1) #balances the outcome
+
+tunegrid <- expand.grid (.mtry= c(2:15)  ) #mtry options#
+control <- trainControl(method="repeatedcv", number=10, repeats=1, index = fold.ids, classProbs = T, summaryFunction = multiClassSummary,
+                        search="grid", selectionFunction = "best", verboseIter = TRUE)
+
+fit3 <- randomForest::randomForest (x = as.data.frame(TRAIN[c(64, 58, 89, 97, 32, 120, 102, 86, 25, 119, 91, 79, 45, 94, 96, 78, 46, 62, 95, 92)]), y = TRAIN$Retained, method="rf", ntree=500, nodesize=5,  metric="Accuracy", tuneGrid=tunegrid, trControl=control, standardize=FALSE)
+fit3 #OOB estimate of  error rate: 44.56%
+
+
+###################### LEAST ERROR Random Forest with Biodata & PScale variables############################
+set.seed(2033) #set
+fold.ids <- createMultiFolds(TRAIN$Retained,k=10,times=1) #balances the outcome
+
+tunegrid <- expand.grid (.mtry= c(2:15)  ) #mtry options#
+control <- trainControl(method="repeatedcv", number=10, repeats=1, index = fold.ids, classProbs = T, summaryFunction = multiClassSummary,
+                        search="grid", selectionFunction = "best", verboseIter = TRUE)
+
+fit4 <- randomForest::randomForest (x = as.data.frame(TRAIN[,55:ncol(TRAIN)]), y = TRAIN$Retained, method="rf", ntree=500, nodesize=5,  metric="Accuracy", tuneGrid=tunegrid, trControl=control, standardize=FALSE)
+fit4 #OOB estimate of  error rate: 42.97%
+
+varImpPlot (fit4)
+
+OOB_predictions <- predict (fit4, newdata = rftest, type="prob") #if you don't list a datafile, it will produce the OOB_predictions
+
+
+
+####################RANDOM FOREST with BIO & PQScale & EN Items##################
+
+#######################TRY TO LOAD IN TPOT for GENETIC PROGRAMMING###########################
+
